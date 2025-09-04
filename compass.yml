@@ -1,0 +1,18 @@
+name: dolibarr_module_fastupload
+id: ari:cloud:compass:29687d12-de2f-40ae-98eb-16a2337c6547:component/27fd418c-f0b4-477c-a1d3-a6f789c15241/49e79ba2-1efe-408d-b4cf-738bf2c9086b
+description: null
+configVersion: 1
+typeId: LIBRARY
+ownerId: null
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/wus-technik/dolibarr_module_fastupload
+relationships:
+  DEPENDS_ON: []
+labels:
+  - language:javascript
+  - source:github
+customFields: null
