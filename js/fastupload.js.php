@@ -9,18 +9,29 @@ $langs->load('fastupload@fastupload');
 $max_file_size = 0;
 
 // Dolibarr style @see html.formfile.php::form_attach_new_file
-$max=$conf->global->MAIN_UPLOAD_DOC;		// En Kb
-$maxphp=@ini_get('upload_max_filesize');	// En inconnu
-if (preg_match('/k$/i',$maxphp)) $maxphp=$maxphp*1;
-if (preg_match('/m$/i',$maxphp)) $maxphp=$maxphp*1024;
-if (preg_match('/g$/i',$maxphp)) $maxphp=$maxphp*1024*1024;
-if (preg_match('/t$/i',$maxphp)) $maxphp=$maxphp*1024*1024*1024;
+$max=getDolGlobalString('MAIN_UPLOAD_DOC');           // En Kb
+$maxphpstr=@ini_get('upload_max_filesize')?:0; // En inconnu
+
+// on recherche une série de chiffres (premier groupe de capture) suivi d'une lettre (optionnelle) parmi
+// les suivantes : k, M, G, T
+if (preg_match('/(\d+)([kMGT])?/', $maxphpstr, $m)) {
+    $maxphp = intval($m[1]);
+    $letter = strtolower($m[2]);
+    if ($letter === 'k') $maxphp=$maxphp*1;
+    if ($letter === 'm') $maxphp=$maxphp*1024;
+    if ($letter === 'g') $maxphp=$maxphp*1024*1024;
+    if ($letter === 't') $maxphp=$maxphp*1024*1024*1024;
+    if ($letter === '') $maxphp = $maxphp;
+}
+
 // Now $max and $maxphp are in Kb
 if ($maxphp > 0) $max=min($max,$maxphp);
 if ($max > 0)
 {
 	$max_file_size = $max/1024; // Conversion Kb en Mb
 }
+
+$newToken = function_exists('newToken') ? newToken() : $_SESSION['newtoken'];
 
 // Define javascript type
 top_httphead('text/javascript; charset=UTF-8');
@@ -35,8 +46,8 @@ $(document).ready( function() {
 
 			var zone_object = new Dropzone(form[0], {
 				paramName: paramName,
-				autoProcessQueue: <?php echo !empty($conf->global->FASTUPLOAD_ENABLE_AUTOUPLOAD) ? 'true' : 'false'; ?>,
-				addRemoveLinks: !<?php echo !empty($conf->global->FASTUPLOAD_ENABLE_AUTOUPLOAD) ? 'true' : 'false'; ?>,
+				autoProcessQueue: <?php echo !empty(getDolGlobalString('FASTUPLOAD_ENABLE_AUTOUPLOAD')) ? 'true' : 'false'; ?>,
+                    addRemoveLinks: !<?php echo !empty(getDolGlobalString('FASTUPLOAD_ENABLE_AUTOUPLOAD')) ? 'true' : 'false'; ?>,
 				clickable: zone_class,
 				previewsContainer: "#" + classPrefix + "-previews-box",
 				uploadMultiple: <?php echo (float) DOL_VERSION < 4.0 ? 'false' : 'true'; ?>,
@@ -55,7 +66,7 @@ $(document).ready( function() {
 										<div class=\"dz-error-message\"><span data-dz-errormessage></span></div>\n\n\
 									</div>",
 				maxFilesize: <?php echo $max_file_size; ?>,
-				maxFiles: <?php echo !empty($conf->global->FASTUPLOAD_LIMIT_FILE_NUMBER) ? $conf->global->FASTUPLOAD_LIMIT_FILE_NUMBER : 50; ?>,
+				maxFiles: <?php echo getDolGlobalInt('FASTUPLOAD_LIMIT_FILE_NUMBER',50); ?>,
 				dictDefaultMessage: "<?php echo addslashes($langs->transnoentities('FastUpload_DefaultMessage')); ?>",
 				dictFallbackMessage: "<?php echo addslashes($langs->transnoentities('FastUpload_FallbackMessage')); ?>",
 				dictFallbackText: "<?php echo addslashes($langs->transnoentities('FastUpload_FallbackText')); ?>",
@@ -154,7 +165,7 @@ $(document).ready( function() {
 			+ '</div>'
 		);
 		if (dropzone_savingdocmask) dropzone_form.append(dropzone_savingdocmask);
-		dropzone_form.append($('<input type="hidden" name="fastupload_ajax" value="1" />'));
+		dropzone_form.append($('<input type="hidden" name="fastupload_ajax" value="1" /><input type="hidden" name="token" value="<?php print $newToken; ?>" />'));
 
 
 		$formuserfile.hide();
